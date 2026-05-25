@@ -51,6 +51,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInitialDirectoryFromFolderId } from "../hooks/useInitialDirectoryFromFolderId";
 import { usePreviewConfig } from "../hooks/usePreviewConfig";
 import { useTaskCreation } from "../hooks/useTaskCreation";
+import { isValidConfigValue } from "../utils/configOptions";
 import { CloudGithubMissingNotice } from "./CloudGithubMissingNotice";
 import { SuggestedTasksPanel } from "./SuggestedTasksPanel";
 import { type WorkspaceMode, WorkspaceModeSelect } from "./WorkspaceModeSelect";
@@ -61,6 +62,8 @@ interface TaskInputProps {
   initialPrompt?: string;
   initialPromptKey?: string;
   initialCloudRepository?: string;
+  initialModel?: string;
+  initialMode?: string;
   reportAssociation?: TaskInputReportAssociation;
 }
 
@@ -70,6 +73,8 @@ export function TaskInput({
   initialPrompt,
   initialPromptKey,
   initialCloudRepository,
+  initialModel,
+  initialMode,
   reportAssociation,
 }: TaskInputProps = {}) {
   const { cloudRegion } = useAuthStore();
@@ -350,6 +355,31 @@ export function TaskInput({
     isLoading: isPreviewLoading,
     setConfigOption,
   } = usePreviewConfig(adapter);
+
+  const lastAppliedDeepLinkConfigKey = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (isPreviewLoading) return;
+    if (!initialPromptKey) return;
+    if (lastAppliedDeepLinkConfigKey.current === initialPromptKey) return;
+    if (!initialModel && !initialMode) return;
+
+    if (initialModel && isValidConfigValue(modelOption, initialModel)) {
+      setConfigOption(modelOption.id, initialModel);
+    }
+    if (initialMode && isValidConfigValue(modeOption, initialMode)) {
+      setConfigOption(modeOption.id, initialMode);
+    }
+    lastAppliedDeepLinkConfigKey.current = initialPromptKey;
+  }, [
+    isPreviewLoading,
+    initialPromptKey,
+    initialModel,
+    initialMode,
+    modelOption,
+    modeOption,
+    setConfigOption,
+  ]);
 
   const { folders } = useFolders();
 
