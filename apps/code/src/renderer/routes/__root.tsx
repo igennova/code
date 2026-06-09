@@ -21,7 +21,11 @@ import { useIntegrations } from "@hooks/useIntegrations";
 import { openTask, openTaskInput } from "@hooks/useOpenTask";
 import { Box, Flex } from "@radix-ui/themes";
 import { useTRPC } from "@renderer/trpc/client";
-import { BILLING_FLAG, SYNC_CLOUD_TASKS_FLAG } from "@shared/constants";
+import {
+  BILLING_FLAG,
+  HOME_TAB_FLAG,
+  SYNC_CLOUD_TASKS_FLAG,
+} from "@shared/constants";
 import { useCommandMenuStore } from "@stores/commandMenuStore";
 import { useShortcutsSheetStore } from "@stores/shortcutsSheetStore";
 import { type QueryClient, useQueryClient } from "@tanstack/react-query";
@@ -30,8 +34,16 @@ import {
   Outlet,
   useRouterState,
 } from "@tanstack/react-router";
+import { onFeatureFlagsLoaded } from "@utils/analytics";
 import { logger } from "@utils/logger";
-import { lazy, Suspense, useCallback, useEffect, useRef } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 // Dynamic import keeps the devtools chunk out of the prod bundle. Without the
 // gate at the import level, conditional render alone still ships the devtools
@@ -102,6 +114,7 @@ function RootLayout() {
   const reconcilingTaskIds = useRef<Set<string>>(new Set());
   const billingEnabled = useFeatureFlag(BILLING_FLAG);
   const syncCloudTasksEnabled = useFeatureFlag(SYNC_CLOUD_TASKS_FLAG);
+  const homeTabEnabled = useFeatureFlag(HOME_TAB_FLAG);
 
   const sidebarData = useSidebarData({ activeView: view });
   const visualTaskOrder = useVisualTaskOrder(sidebarData);
@@ -154,6 +167,18 @@ function RootLayout() {
 
   // Note: a malformed /code/tasks/$taskId without a valid id is impossible —
   // TanStack Router only mounts the task-detail route when taskId is in the URL.
+
+  // The /code/home route is only reachable while the home-tab flag is on, but
+  // flags resolve asynchronously — a restored route (or a flag flipping off
+  // mid-session) can leave us on home without access. Redirect to the new-task
+  // screen once flags have loaded and home is gated off.
+  const [flagsLoaded, setFlagsLoaded] = useState(false);
+  useEffect(() => onFeatureFlagsLoaded(() => setFlagsLoaded(true)), []);
+  useEffect(() => {
+    if (flagsLoaded && !homeTabEnabled && view.type === "home") {
+      openTaskInput();
+    }
+  }, [flagsLoaded, homeTabEnabled, view.type]);
 
   const handleToggleCommandMenu = useCallback(() => {
     toggleCommandMenu();

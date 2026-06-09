@@ -84,4 +84,6 @@ export const MAIN_TOKENS = Object.freeze({
   WorkspaceService: Symbol.for("Main.WorkspaceService"),
   EnrichmentService: Symbol.for("Main.EnrichmentService"),
   UsageMonitorService: Symbol.for("Main.UsageMonitorService"),
+  WorkflowService: Symbol.for("Main.WorkflowService"),
+  HomeService: Symbol.for("Main.HomeService"),
 });

@@ -46,6 +46,7 @@ import { FsService } from "../services/fs/service";
 import { GitService } from "../services/git/service";
 import { GitHubIntegrationService } from "../services/github-integration/service";
 import { HandoffService } from "../services/handoff/service";
+import { HomeService } from "../services/home/service";
 import { InboxLinkService } from "../services/inbox-link/service";
 import { LinearIntegrationService } from "../services/linear-integration/service";
 import { LlmGatewayService } from "../services/llm-gateway/service";
@@ -69,6 +70,7 @@ import { UIService } from "../services/ui/service";
 import { UpdatesService } from "../services/updates/service";
 import { UsageMonitorService } from "../services/usage-monitor/service";
 import { WatcherRegistryService } from "../services/watcher-registry/service";
+import { WorkflowService } from "../services/workflow/service";
 import { WorkspaceService } from "../services/workspace/service";
 import { MAIN_TOKENS } from "./tokens";
 
@@ -153,6 +155,8 @@ container.bind(MAIN_TOKENS.TaskLinkService).to(TaskLinkService);
 container.bind(MAIN_TOKENS.InboxLinkService).to(InboxLinkService);
 container.bind(MAIN_TOKENS.NewTaskLinkService).to(NewTaskLinkService);
 container.bind(MAIN_TOKENS.WatcherRegistryService).to(WatcherRegistryService);
+container.bind(MAIN_TOKENS.WorkflowService).to(WorkflowService);
+container.bind(MAIN_TOKENS.HomeService).to(HomeService);
 container.bind(MAIN_TOKENS.WorkspaceService).to(WorkspaceService);
 
 container.bind(MAIN_TOKENS.SettingsStore).toConstantValue(settingsStore);

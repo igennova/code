@@ -13,18 +13,21 @@ import {
 import { useRenameTask, useTasks } from "@features/tasks/hooks/useTasks";
 import { useWorkspaces } from "@features/workspace/hooks/useWorkspace";
 import { useAppView } from "@hooks/useAppView";
+import { useFeatureFlag } from "@hooks/useFeatureFlag";
 import { openTask, openTaskInput } from "@hooks/useOpenTask";
 import { useTaskContextMenu } from "@hooks/useTaskContextMenu";
 import { Separator } from "@posthog/quill";
 import { Box, Flex } from "@radix-ui/themes";
 import {
   navigateToCommandCenter,
+  navigateToHome,
   navigateToInbox,
   navigateToMcpServers,
   navigateToSkills,
   navigateToTaskDetail,
 } from "@renderer/navigationBridge";
 import { trpcClient } from "@renderer/trpc/client";
+import { HOME_TAB_FLAG } from "@shared/constants";
 import type { Task } from "@shared/types";
 import { useCommandMenuStore } from "@stores/commandMenuStore";
 import { useRendererWindowFocusStore } from "@stores/rendererWindowFocusStore";
@@ -39,8 +42,10 @@ import { useSidebarStore } from "../stores/sidebarStore";
 import { useTaskSelectionStore } from "../stores/taskSelectionStore";
 import { ArchiveRunningTaskDialog } from "./ArchiveRunningTaskDialog";
 import { CommandCenterItem } from "./items/CommandCenterItem";
-import { InboxItem, NewTaskItem } from "./items/HomeItem";
+import { HomeItem } from "./items/HomeItem";
+import { InboxItem } from "./items/InboxItem";
 import { McpServersItem } from "./items/McpServersItem";
+import { NewTaskItem } from "./items/NewTaskItem";
 import { SearchItem } from "./items/SearchItem";
 import { SkillsItem } from "./items/SkillsItem";
 import { SidebarItem } from "./SidebarItem";
@@ -70,6 +75,8 @@ function SidebarMenuComponent() {
   const { archiveTask } = useArchiveTask();
   const { renameTask } = useRenameTask();
   const { togglePin } = usePinnedTasks();
+
+  const homeTabEnabled = useFeatureFlag(HOME_TAB_FLAG);
 
   const sidebarData = useSidebarData({
     activeView: view,
@@ -119,6 +126,10 @@ function SidebarMenuComponent() {
 
   const handleNewTaskClick = () => {
     openTaskInput();
+  };
+
+  const handleHomeClick = () => {
+    navigateToHome();
   };
 
   const handleInboxClick = () => {
@@ -402,9 +413,17 @@ function SidebarMenuComponent() {
           <NewTaskItem
             isActive={sidebarData.isHomeActive}
             onClick={handleNewTaskClick}
-            variant="primary"
           />
         </Box>
+
+        {homeTabEnabled && (
+          <Box>
+            <HomeItem
+              isActive={sidebarData.isHomeViewActive}
+              onClick={handleHomeClick}
+            />
+          </Box>
+        )}
 
         <Box>
           <SearchItem onClick={handleSearchClick} />

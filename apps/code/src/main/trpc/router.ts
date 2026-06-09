@@ -18,6 +18,7 @@ import { fsRouter } from "./routers/fs";
 import { gitRouter } from "./routers/git";
 import { githubIntegrationRouter } from "./routers/github-integration";
 import { handoffRouter } from "./routers/handoff";
+import { homeRouter } from "./routers/home";
 import { linearIntegrationRouter } from "./routers/linear-integration.js";
 import { llmGatewayRouter } from "./routers/llm-gateway";
 import { logsRouter } from "./routers/logs";
@@ -38,6 +39,7 @@ import { suspensionRouter } from "./routers/suspension.js";
 import { uiRouter } from "./routers/ui";
 import { updatesRouter } from "./routers/updates";
 import { usageMonitorRouter } from "./routers/usage-monitor";
+import { workflowRouter } from "./routers/workflow";
 import { workspaceRouter } from "./routers/workspace";
 import { router } from "./trpc";
 
@@ -62,6 +64,7 @@ export const trpcRouter = router({
   git: gitRouter,
   githubIntegration: githubIntegrationRouter,
   handoff: handoffRouter,
+  home: homeRouter,
   linearIntegration: linearIntegrationRouter,
   llmGateway: llmGatewayRouter,
   mcpApps: mcpAppsRouter,
@@ -83,6 +86,7 @@ export const trpcRouter = router({
   updates: updatesRouter,
   usageMonitor: usageMonitorRouter,
   deepLink: deepLinkRouter,
+  workflow: workflowRouter,
   workspace: workspaceRouter,
 });
 
