@@ -2020,6 +2020,8 @@ ${truncatedDiff || "(no diff available)"}${contextSection}`;
       return false;
     }
     if (workspace.linkedBranch) return false;
+    // Worktree dir can be gone while the row remains; git would throw.
+    if (!fs.existsSync(workspace.worktreePath)) return false;
     const [diffStats, syncStatus] = await Promise.all([
       this.getDiffStats(workspace.worktreePath),
       this.getGitSyncStatus(workspace.worktreePath),
@@ -2113,6 +2115,11 @@ ${truncatedDiff || "(no diff available)"}${contextSection}`;
     }
 
     if (isCloud) return { prUrl: null, prState: null, hasDiff: false };
+
+    // Repo/worktree dir can be gone while the row remains; git would throw.
+    if (repoPath && !fs.existsSync(repoPath)) {
+      return { prUrl: null, prState: null, hasDiff: false };
+    }
 
     if (linkedBranch && repoPath) {
       const prUrl = await this.getPrUrlForBranch(repoPath, linkedBranch);

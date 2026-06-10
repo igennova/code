@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockExecGh = vi.hoisted(() => vi.fn());
@@ -286,6 +287,54 @@ describe("GitService.getPrUrlForBranch", () => {
     const result = await service.getPrUrlForBranch("/repo", "feat/x");
 
     expect(result).toBeNull();
+  });
+});
+
+describe("GitService.getTaskPrStatus (missing worktree directory)", () => {
+  let service: GitService;
+  let workspaceService: {
+    getWorkspace: ReturnType<typeof vi.fn>;
+    emit: ReturnType<typeof vi.fn>;
+  };
+  let workspaceRepo: {
+    findByTaskId: ReturnType<typeof vi.fn>;
+    updatePrCache: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    workspaceService = { getWorkspace: vi.fn(), emit: vi.fn() };
+    workspaceRepo = {
+      findByTaskId: vi.fn().mockReturnValue(null),
+      updatePrCache: vi.fn(),
+    };
+    service = new GitService(
+      {} as LlmGatewayService,
+      workspaceService as unknown as WorkspaceService,
+      { getSessionEnvForTask: async () => ({}) } as unknown as AgentService,
+      workspaceRepo as unknown as IWorkspaceRepository,
+    );
+  });
+
+  it("returns no diff and never touches git when the worktree directory is gone", async () => {
+    workspaceService.getWorkspace.mockResolvedValue({
+      mode: "worktree",
+      worktreePath: "/some/worktree",
+      folderPath: null,
+      linkedBranch: null,
+    });
+    // Force the missing-dir guard regardless of the real filesystem.
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    const diffSpy = vi.spyOn(service, "getDiffStats");
+
+    // Pre-guard this rejected; now it resolves to no diff.
+    const result = await service.getTaskPrStatus("task-1", null);
+    // Drain the fire-and-forget revalidation so the computeTaskPrStatus
+    // guard (background path) is covered too, not just computeWorktreeHasDiff.
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(result).toEqual({ prState: null, hasDiff: false });
+    expect(diffSpy).not.toHaveBeenCalled();
   });
 });
 
