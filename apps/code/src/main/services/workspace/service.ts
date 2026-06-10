@@ -802,19 +802,18 @@ export class WorkspaceService extends TypedEventEmitter<WorkspaceServiceEvents> 
       return { exists: true };
     }
 
+    // Read-only: never mutate here. A missing path can be transient (unmounted
+    // volume, slug/layout mismatch), so deleting the association would wrongly
+    // strip a task's working dir. Removal happens only via deleteWorkspace.
     const folderPath = this.getFolderPath(association.folderId);
     if (!folderPath) {
-      this.removeTaskAssociation(taskId);
       return { exists: false, missingPath: "(folder not found)" };
     }
 
     if (association.mode === "local") {
       const exists = fs.existsSync(folderPath);
       if (!exists) {
-        log.info(
-          `Folder for task ${taskId} no longer exists, removing association`,
-        );
-        this.removeTaskAssociation(taskId);
+        log.info(`Folder for task ${taskId} no longer exists`);
         return { exists: false, missingPath: folderPath };
       }
       return { exists: true };
@@ -824,10 +823,7 @@ export class WorkspaceService extends TypedEventEmitter<WorkspaceServiceEvents> 
       const worktreePath = deriveWorktreePath(folderPath, association.worktree);
       const exists = fs.existsSync(worktreePath);
       if (!exists) {
-        log.info(
-          `Worktree for task ${taskId} no longer exists, removing association`,
-        );
-        this.removeTaskAssociation(taskId);
+        log.info(`Worktree for task ${taskId} no longer exists`);
         return { exists: false, missingPath: worktreePath };
       }
       return { exists: true };
