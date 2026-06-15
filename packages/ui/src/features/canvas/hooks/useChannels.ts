@@ -26,7 +26,7 @@ export function useChannels(options?: { enabled?: boolean }): {
 } {
   const query = useAuthenticatedQuery<Schemas.FileSystem[]>(
     CHANNELS_QUERY_KEY,
-    (client) => client.getDesktopFileSystem(),
+    (client) => client.getDesktopFileSystemChannels(),
     {
       enabled: options?.enabled ?? true,
       refetchInterval: CHANNELS_POLL_INTERVAL_MS,
@@ -56,7 +56,20 @@ export function useChannelMutations() {
       if (!client) throw new Error("Not authenticated");
       return client.createDesktopFileSystemChannel(name);
     },
-    onSuccess: invalidate,
+    onSuccess: (newFs) => {
+      // Insert the created channel into the cache immediately so the sidebar
+      // updates the instant the POST resolves, rather than waiting on the
+      // paginated refetch that `invalidate` triggers.
+      queryClient.setQueryData<Schemas.FileSystem[]>(
+        CHANNELS_QUERY_KEY,
+        (old) => {
+          if (!old) return [newFs];
+          if (old.some((fs) => fs.id === newFs.id)) return old;
+          return [...old, newFs];
+        },
+      );
+      invalidate();
+    },
   });
 
   const deleteMutation = useMutation({
